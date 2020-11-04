@@ -6,6 +6,7 @@ from PATERNS.HD_POSITIVE import HD_POSITIVE
 from PATERNS.RD_NEGATIVE import RD_NEGATIVE
 from PATERNS.RD_POSITIVE import RD_POSITIVE
 
+TICKER_INDEX = '<TICKER>'
 CLOSE_INDEX = '<CLOSE>'
 LOW_INDEX = '<LOW>'
 HIGH_INDEX = '<HIGH>'
@@ -15,7 +16,12 @@ VALUE_INDEX = '<VALUE>'
 NOT_INDEX = '<NOT>'
 DATE_INDEX = '<DTYYYYMMDD>'
 
-HISTORY_LENGTH = 365  # one year
+HISTORY_LENGTH = 730  # one year
+HD_POS = []
+HD_NEG = []
+RD_POS = []
+RD_NEG = []
+
 if __name__ == '__main__':
     input_folder = './RAWDATA/'
     files = glob.glob(f'{input_folder}*.csv')
@@ -23,24 +29,31 @@ if __name__ == '__main__':
         print(file)
         data = pd.read_csv(file)
 
+        TICKER_INDEX = data[TICKER_INDEX].iloc[-HISTORY_LENGTH:]
         Opens = data[OPEN_INDEX].iloc[-HISTORY_LENGTH:]
         Highs = data[HIGH_INDEX].iloc[-HISTORY_LENGTH:]
         Lows = data[LOW_INDEX].iloc[-HISTORY_LENGTH:]
         Closes = data[CLOSE_INDEX].iloc[-HISTORY_LENGTH:]
         Volumes = data[VOl_INDEX].iloc[-HISTORY_LENGTH:]
         Values = data[VALUE_INDEX].iloc[-HISTORY_LENGTH:]
+        DATE = data[DATE_INDEX].iloc[-HISTORY_LENGTH:]
 
-        for i in range(1, 100000):
-            Closes = data[CLOSE_INDEX].iloc[-(HISTORY_LENGTH + i):-i]
-            Lows = data[LOW_INDEX].iloc[-(HISTORY_LENGTH + i):-i]
-            Highs = data[HIGH_INDEX].iloc[-(HISTORY_LENGTH + i):-i]
-            DATE = data[DATE_INDEX].iloc[-(HISTORY_LENGTH + i):-i]
+        rsi = RSI(Closes)
 
-            rsi = RSI(Closes)
+        out = HD_POSITIVE().RD(Lows, rsi, DATE)
+        if len(out) != 0:
+            HD_POS.append(out)
+        out = HD_NEGATIVE().RD(Highs, rsi, DATE)
+        if len(out) != 0:
+            HD_NEG.append(out)
+        out = RD_NEGATIVE().RD(Highs, rsi, DATE)
+        if len(out) != 0:
+            RD_NEG.append(out)
+        out = RD_POSITIVE().RD(Lows, rsi, DATE)
+        if len(out) != 0:
+            RD_POS.append(out)
 
-            HD_POSITIVE().RD(Lows, rsi, DATE)
-            HD_NEGATIVE().RD(Highs, rsi, DATE)
-            RD_NEGATIVE().RD(Highs, rsi, DATE)
-            RD_POSITIVE().RD(Lows, rsi, DATE)
-
-
+    pd.DataFrame(HD_POS).to_csv('OUTPUT/HD_POS.csv')
+    pd.DataFrame(HD_NEG).to_csv('OUTPUT/HD_NEG.csv')
+    pd.DataFrame(RD_POS).to_csv('OUTPUT/RD_POS.csv')
+    pd.DataFrame(RD_NEG).to_csv('OUTPUT/RD_NEG.csv')

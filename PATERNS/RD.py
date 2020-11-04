@@ -55,7 +55,7 @@ class RD(ABC):
 
             if (len(Prices) - now_low_index - 1) > NOW_LENGTH or \
                     abs(now_indicator_index - now_low_index) > MAX_DISTANCE:
-                return
+                return result
 
             for index_low in range(len(low_points) - 1, -1, -1):
 
@@ -108,4 +108,4 @@ class RD(ABC):
                                 ]
                             )
 
-            return result
+        return result
