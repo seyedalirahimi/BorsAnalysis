@@ -29,7 +29,7 @@ if __name__ == '__main__':
         print(file)
         data = pd.read_csv(file)
 
-        TICKER_INDEX = data[TICKER_INDEX].iloc[-HISTORY_LENGTH:]
+        TICKER = data[TICKER_INDEX].iloc[-HISTORY_LENGTH:]
         Opens = data[OPEN_INDEX].iloc[-HISTORY_LENGTH:]
         Highs = data[HIGH_INDEX].iloc[-HISTORY_LENGTH:]
         Lows = data[LOW_INDEX].iloc[-HISTORY_LENGTH:]
@@ -40,18 +40,19 @@ if __name__ == '__main__':
 
         rsi = RSI(Closes)
 
+        name = TICKER.to_numpy()[-1]
         out = HD_POSITIVE().RD(Lows, rsi, DATE)
         if len(out) != 0:
-            HD_POS.append(out)
+            HD_POS.append([name, out])
         out = HD_NEGATIVE().RD(Highs, rsi, DATE)
         if len(out) != 0:
-            HD_NEG.append(out)
+            HD_NEG.append([name, out])
         out = RD_NEGATIVE().RD(Highs, rsi, DATE)
         if len(out) != 0:
-            RD_NEG.append(out)
+            RD_NEG.append([name, out])
         out = RD_POSITIVE().RD(Lows, rsi, DATE)
         if len(out) != 0:
-            RD_POS.append(out)
+            RD_POS.append([name, out])
 
     pd.DataFrame(HD_POS).to_csv('OUTPUT/HD_POS.csv')
     pd.DataFrame(HD_NEG).to_csv('OUTPUT/HD_NEG.csv')
