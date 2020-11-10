@@ -1,6 +1,4 @@
-from scipy.signal import argrelmin
 from abc import ABC, abstractmethod
-import numpy as np
 
 from MODELS.Line import Line
 from MODELS.Point import Point

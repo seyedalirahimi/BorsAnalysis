@@ -1,8 +1,8 @@
 import pandas as pd
 import glob
-import os
 import numpy as np
-import xlsxwriter
+
+from INDICATORS.MACD import macd
 from INDICATORS.RSI import RSI
 from PATERNS.HD_NEGATIVE import HD_NEGATIVE
 from PATERNS.HD_POSITIVE import HD_POSITIVE
@@ -45,6 +45,7 @@ if __name__ == '__main__':
                 now_DATE_J = DATE_J.to_numpy()[-1]
                 Volumes = Volumes.to_numpy()
 
+                # region VDV
                 VDV10 = 0
                 VDV30 = 0
                 VDV60 = 0
@@ -65,51 +66,78 @@ if __name__ == '__main__':
                     average_volume_100 = np.average(Volumes[length - 101:-1])
                     VDV100 = round(Volumes[-1] / average_volume_100, 2)
 
-                rsi14 = RSI(Closes, 14)
-                rsi22 = RSI(Closes, 22)
+                # endregion
+
+                _rsi14 = RSI(Closes, 14)
+                _rsi22 = RSI(Closes, 22)
+                _macd = macd(Closes)
+                _macd_diff = _macd._macd_diff
+
 
                 # region RD 14
-                out = HD_POSITIVE().RD(Lows, rsi14, DATE_J)
+                out = HD_POSITIVE().RD(Lows, _rsi14, DATE_J)
                 if len(out) != 0:
                     for lines in out:
                         divergences.append([now_DATE_J, TICKER, 'HD+', 'RSI14', VDV10, VDV30, VDV60, VDV100, lines])
 
-                out = HD_NEGATIVE().RD(Highs, rsi14, DATE_J)
+                out = HD_NEGATIVE().RD(Highs, _rsi14, DATE_J)
                 if len(out) != 0:
                     for lines in out:
                         divergences.append([now_DATE_J, TICKER, 'HD-', 'RSI14', VDV10, VDV30, VDV60, VDV100, lines])
-                out = RD_NEGATIVE().RD(Highs, rsi14, DATE_J)
+                out = RD_NEGATIVE().RD(Highs, _rsi14, DATE_J)
                 if len(out) != 0:
                     for lines in out:
                         divergences.append([now_DATE_J, TICKER, 'RD-', 'RSI14', VDV10, VDV30, VDV60, VDV100, lines])
-                out = RD_POSITIVE().RD(Lows, rsi14, DATE_J)
+                out = RD_POSITIVE().RD(Lows, _rsi14, DATE_J)
                 if len(out) != 0:
                     for lines in out:
                         divergences.append([now_DATE_J, TICKER, 'RD+', 'RSI14', VDV10, VDV30, VDV60, VDV100, lines])
                 # endregion
 
                 # region RD 22
-                out = HD_POSITIVE().RD(Lows, rsi22, DATE_J)
+                out = HD_POSITIVE().RD(Lows, _rsi22, DATE_J)
                 if len(out) != 0:
                     for lines in out:
                         divergences.append([now_DATE_J, TICKER, 'HD+', 'RSI22', VDV10, VDV30, VDV60, VDV100, lines])
-                out = HD_NEGATIVE().RD(Highs, rsi22, DATE_J)
+                out = HD_NEGATIVE().RD(Highs, _rsi22, DATE_J)
                 if len(out) != 0:
                     for lines in out:
                         divergences.append([now_DATE_J, TICKER, 'HD-', 'RSI22', VDV10, VDV30, VDV60, VDV100, lines])
-                out = RD_NEGATIVE().RD(Highs, rsi22, DATE_J)
+                out = RD_NEGATIVE().RD(Highs, _rsi22, DATE_J)
                 if len(out) != 0:
                     for lines in out:
                         divergences.append([now_DATE_J, TICKER, 'RD-', 'RSI22', VDV10, VDV30, VDV60, VDV100, lines])
-                out = RD_POSITIVE().RD(Lows, rsi22, DATE_J)
+                out = RD_POSITIVE().RD(Lows, _rsi22, DATE_J)
                 if len(out) != 0:
                     for lines in out:
                         divergences.append([now_DATE_J, TICKER, 'RD+', 'RSI22', VDV10, VDV30, VDV60, VDV100, lines])
                 # endregion
 
+                # region MACD
+                out = HD_POSITIVE().RD(Lows, _macd_diff, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append(
+                            [now_DATE_J, TICKER, 'HD+', 'MACD', VDV10, VDV30, VDV60, VDV100, lines])
+                out = HD_NEGATIVE().RD(Highs, _macd_diff, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append(
+                            [now_DATE_J, TICKER, 'HD-', 'MACD', VDV10, VDV30, VDV60, VDV100, lines])
+                out = RD_NEGATIVE().RD(Highs, _macd_diff, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append(
+                            [now_DATE_J, TICKER, 'RD-', 'MACD', VDV10, VDV30, VDV60, VDV100, lines])
+                out = RD_POSITIVE().RD(Lows, _macd_diff, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append(
+                            [now_DATE_J, TICKER, 'RD+', 'MACD', VDV10, VDV30, VDV60, VDV100, lines])
+                # endregion
+
         except:
             print(file)
-
 
     pd.DataFrame(divergences).to_csv('OUTPUT/divergence.csv', index=False, encoding="utf-8-sig",
                                      header=['تاریخ', "نماد", "پترن", "ایندیکاتور", "حجم نسبت به 10 روز",
