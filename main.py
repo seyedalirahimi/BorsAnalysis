@@ -1,5 +1,8 @@
 import pandas as pd
 import glob
+import os
+import numpy as np
+import xlsxwriter
 from INDICATORS.RSI import RSI
 from PATERNS.HD_NEGATIVE import HD_NEGATIVE
 from PATERNS.HD_POSITIVE import HD_POSITIVE
@@ -14,49 +17,102 @@ OPEN_INDEX = '<OPEN>'
 VOl_INDEX = '<VOL>'
 VALUE_INDEX = '<VALUE>'
 NOT_INDEX = '<NOT>'
-DATE_INDEX = '<DTYYYYMMDD>'
+DATE_J_INDEX = '<DTYYYYMMDD>'
 
-HISTORY_LENGTH = 730  # one year
-HD_POS = []
-HD_NEG = []
-RD_POS = []
-RD_NEG = []
+HISTORY_LENGTH = 480  # one year
+divergences = []
 
 if __name__ == '__main__':
     input_folder = './RAWDATA/'
+    output_folder = './OUTPUT/'
+
     files = glob.glob(f'{input_folder}*.csv')
     for file in files:
         try:
-            print(file)
+            # region read data and set variables
             data = pd.read_csv(file)
+            if len(data) != 0:
 
-            TICKER = data[TICKER_INDEX].iloc[-HISTORY_LENGTH:]
-            Opens = data[OPEN_INDEX].iloc[-HISTORY_LENGTH:]
-            Highs = data[HIGH_INDEX].iloc[-HISTORY_LENGTH:]
-            Lows = data[LOW_INDEX].iloc[-HISTORY_LENGTH:]
-            Closes = data[CLOSE_INDEX].iloc[-HISTORY_LENGTH:]
-            Volumes = data[VOl_INDEX].iloc[-HISTORY_LENGTH:]
-            Values = data[VALUE_INDEX].iloc[-HISTORY_LENGTH:]
-            DATE = data[DATE_INDEX].iloc[-HISTORY_LENGTH:]
+                TICKER = data[TICKER_INDEX].to_numpy()[-1]
+                Opens = data[OPEN_INDEX].iloc[-HISTORY_LENGTH:]
+                Highs = data[HIGH_INDEX].iloc[-HISTORY_LENGTH:]
+                Lows = data[LOW_INDEX].iloc[-HISTORY_LENGTH:]
+                Closes = data[CLOSE_INDEX].iloc[-HISTORY_LENGTH:]
+                Volumes = data[VOl_INDEX].iloc[-HISTORY_LENGTH:]
+                Values = data[VALUE_INDEX].iloc[-HISTORY_LENGTH:]
+                DATE_J = data[DATE_J_INDEX].iloc[-HISTORY_LENGTH:]
+                # endregion
+                now_DATE_J = DATE_J.to_numpy()[-1]
+                Volumes = Volumes.to_numpy()
 
-            rsi = RSI(Closes)
+                VDV10 = 0
+                VDV30 = 0
+                VDV60 = 0
+                VDV100 = 0
+                length = len(Volumes)
+                if len(Volumes) >= 11:
+                    average_volume_10 = np.average(Volumes[length - 11:-1])
+                    VDV10 = round(Volumes[-1] / average_volume_10, 2)
+                if len(Volumes) >= 31:
+                    average_volume_30 = np.average(Volumes[length - 31:-1])
+                    VDV30 = round(Volumes[-1] / average_volume_30, 2)
 
-            name = TICKER.to_numpy()[-1]
-            out = HD_POSITIVE().RD(Lows, rsi, DATE)
-            if len(out) != 0:
-                HD_POS.append([name, out])
-            out = HD_NEGATIVE().RD(Highs, rsi, DATE)
-            if len(out) != 0:
-                HD_NEG.append([name, out])
-            out = RD_NEGATIVE().RD(Highs, rsi, DATE)
-            if len(out) != 0:
-                RD_NEG.append([name, out])
-            out = RD_POSITIVE().RD(Lows, rsi, DATE)
-            if len(out) != 0:
-                RD_POS.append([name, out])
+                if len(Volumes) >= 61:
+                    average_volume_60 = np.average(Volumes[length - 61:-1])
+                    VDV60 = round(Volumes[-1] / average_volume_60, 2)
+
+                if len(Volumes) >= 101:
+                    average_volume_100 = np.average(Volumes[length - 101:-1])
+                    VDV100 = round(Volumes[-1] / average_volume_100, 2)
+
+                rsi14 = RSI(Closes, 14)
+                rsi22 = RSI(Closes, 22)
+
+                # region RD 14
+                out = HD_POSITIVE().RD(Lows, rsi14, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append([now_DATE_J, TICKER, 'HD+', 'RSI14', VDV10, VDV30, VDV60, VDV100, lines])
+
+                out = HD_NEGATIVE().RD(Highs, rsi14, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append([now_DATE_J, TICKER, 'HD-', 'RSI14', VDV10, VDV30, VDV60, VDV100, lines])
+                out = RD_NEGATIVE().RD(Highs, rsi14, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append([now_DATE_J, TICKER, 'RD-', 'RSI14', VDV10, VDV30, VDV60, VDV100, lines])
+                out = RD_POSITIVE().RD(Lows, rsi14, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append([now_DATE_J, TICKER, 'RD+', 'RSI14', VDV10, VDV30, VDV60, VDV100, lines])
+                # endregion
+
+                # region RD 22
+                out = HD_POSITIVE().RD(Lows, rsi22, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append([now_DATE_J, TICKER, 'HD+', 'RSI22', VDV10, VDV30, VDV60, VDV100, lines])
+                out = HD_NEGATIVE().RD(Highs, rsi22, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append([now_DATE_J, TICKER, 'HD-', 'RSI22', VDV10, VDV30, VDV60, VDV100, lines])
+                out = RD_NEGATIVE().RD(Highs, rsi22, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append([now_DATE_J, TICKER, 'RD-', 'RSI22', VDV10, VDV30, VDV60, VDV100, lines])
+                out = RD_POSITIVE().RD(Lows, rsi22, DATE_J)
+                if len(out) != 0:
+                    for lines in out:
+                        divergences.append([now_DATE_J, TICKER, 'RD+', 'RSI22', VDV10, VDV30, VDV60, VDV100, lines])
+                # endregion
+
         except:
-            print('except')
-    pd.DataFrame(HD_POS).to_csv('OUTPUT/HD_POS.csv')
-    pd.DataFrame(HD_NEG).to_csv('OUTPUT/HD_NEG.csv')
-    pd.DataFrame(RD_POS).to_csv('OUTPUT/RD_POS.csv')
-    pd.DataFrame(RD_NEG).to_csv('OUTPUT/RD_NEG.csv')
+            print(file)
+
+
+    pd.DataFrame(divergences).to_csv('OUTPUT/divergence.csv', index=False, encoding="utf-8-sig",
+                                     header=['تاریخ', "نماد", "پترن", "ایندیکاتور", "حجم نسبت به 10 روز",
+                                             "حجم نسبت به 30 روز", "حجم نسبت به 60 روز", "حجم نسبت به 100 روز",
+                                             "خط پترن", ]
+                                     )
