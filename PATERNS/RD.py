@@ -79,8 +79,8 @@ class RD(ABC):
                             alpha = (now_low - y) / (
                                     now_low_index - x)
 
-                            for i in range(index_low + 1, len(low_points)):
-                                if self.crossedPrice(y + ((low_points[i] - x) * alpha), Prices[low_points[i]]):
+                            for i in range(x+1, now_low_index):
+                                if self.crossedPrice(y + ((i - x) * alpha), Prices[i]):
                                     crossed = True
                                     break
                             # endregion
@@ -92,9 +92,9 @@ class RD(ABC):
                                 alpha = (now_indicator - y) / (
                                         now_indicator_index - x)
 
-                                for i in range(index_indicator + 1, len(indicator_points)):
-                                    if self.crossedIndicator(y + ((indicator_points[i] - x) * alpha),
-                                                             Indicator[indicator_points[i]]):
+                                for i in range(x+1, now_indicator_index):
+                                    if self.crossedIndicator(y + ((i - x) * alpha),
+                                                             Indicator[i]):
                                         crossed = True
                                         break
 
