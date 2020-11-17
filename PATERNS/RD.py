@@ -66,8 +66,8 @@ class RD(ABC):
 
                         if abs(low_points[index_low] - indicator_points[index_indicator]) <= MAX_DISTANCE \
                                 and self.comparePrice(now_low, Prices[low_points[index_low]]) \
-                                and self.compareIndicator(now_indicator,
-                                                          Indicator[indicator_points[index_indicator]]):
+                                and self.compareIndicator(now_indicator, Indicator[indicator_points[index_indicator]]) \
+                                and now_indicator * Indicator[indicator_points[index_indicator]] > 0:
 
                             # check cross line in data and Indicator
                             # Calculate the line formula
@@ -79,7 +79,7 @@ class RD(ABC):
                             alpha = (now_low - y) / (
                                     now_low_index - x)
 
-                            for i in range(x+1, now_low_index):
+                            for i in range(x + 1, now_low_index):
                                 if self.crossedPrice(y + ((i - x) * alpha), Prices[i]):
                                     crossed = True
                                     break
@@ -92,7 +92,7 @@ class RD(ABC):
                                 alpha = (now_indicator - y) / (
                                         now_indicator_index - x)
 
-                                for i in range(x+1, now_indicator_index):
+                                for i in range(x + 1, now_indicator_index):
                                     if self.crossedIndicator(y + ((i - x) * alpha),
                                                              Indicator[i]):
                                         crossed = True
